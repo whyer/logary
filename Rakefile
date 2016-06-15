@@ -15,6 +15,24 @@ task :paket_bootstrap do
          File.exists? 'tools/paket.exe'
 end
 
+task :install_tools do
+  system 'tools/NuGet.exe install -ExcludeVersion ILRepack -OutputDirectory tools', clr_command:true
+end
+
+task :merge_shipper => :install_tools do
+   system 'tools/ILRepack/tools/ILRepack.exe ' \
+     '-keyfile:tools/logary.snk ' \
+     '-xmldocs -internalize -parallel ' \
+     '-targetplatform:v4 ' \
+     '-index ' \
+     '-lib:src/targets/Logary.Targets.Shipper/bin/Release ' \
+     '-out:build/Logary.Targets.Shipper.signed.dll ' \
+     'src/targets/Logary.Targets.Shipper/bin/Release/Logary.Targets.Shipper.dll ' \
+	   'src/targets/Logary.Targets.Shipper/bin/Release/fszmq.dll ' \
+     'src/targets/Logary.Targets.Shipper/bin/Release/FsPickler.dll'
+     clr_command:true
+end
+
 desc 'restore all nugets as per the packages.config files'
 task :restore => :paket_bootstrap do
   system 'tools/paket.exe', 'restore', clr_command: true
@@ -156,7 +174,7 @@ end
 
 test_runner :tests_spec do |tests|
   tests.files = FileList['src/tests/Logary.CSharp.Tests/bin/Release/*.Tests.dll']
-  tests.exe = 'packages\Machine.Specifications.Runner.Console\tools\mspec-clr4.exe' 
+  tests.exe = 'packages\Machine.Specifications.Runner.Console\tools\mspec-clr4.exe'
   #tests.add_parameter ''
   #tests.native_exe # when you don't want to use 'mono' as the native executable on non-windows systems
 end
